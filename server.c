@@ -1,26 +1,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <arpa/inet.h>
 #include <string.h>
+#include <arpa/inet.h>
 
-char buffer [1024];
+#define max_size 1024
+char buffer[max_size];
 
 void main(){
     int sock;
-    struct sockaddr_in server;
-    char * message = "hello";
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    server.sin_family= AF_INET;
-    server.sin_port = htons(8080);
-    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    struct sockaddr_in server, client;
+    socklen_t len = sizeof(client);
 
-    connect(sock, (struct sockaddr *)&server, sizeof(server));
-    printf("%s", buffer);
-    while(fgets(buffer, sizeof(buffer), stdin)){
-        send(sock,buffer, strlen(buffer),0);
-        memset(buffer, sizeof(buffer),'\0');
-        recv(sock, buffer, sizeof(buffer),0);
-        printf("%s\n",buffer);
-    }
+    server.sin_family = AF_INET;
+    server.sin_port = htons(8080);
+    server.sin_addr.s_addr = INADDR_ANY;
+
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    bind(sock,(struct sockaddr *)&server,sizeof (server));
+    printf("Listening in port %d\n", 8080);
+    int ll = recvfrom(sock, buffer, sizeof(buffer),0,(struct sockaddr *)&client,&len);
+    buffer[ll]='\0';
+    printf("%s",buffer);
+    char *message = "good morning";
+    sendto(sock, message, strlen(message),0,(struct sockaddr *)&client, sizeof(client));
+    close(sock);
 }
